@@ -59,6 +59,12 @@ jobs:
       - name: Verify source and run regression tests
         run: npm run verify
 
+      - name: Enable AndroidX for Android build
+        run: |
+          mkdir -p android
+          touch android/gradle.properties
+          grep -qxF 'android.useAndroidX=true' android/gradle.properties || echo 'android.useAndroidX=true' >> android/gradle.properties
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
