@@ -4,7 +4,8 @@ name: Build Khoms APK from uploaded ZIP
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'khoms_app_source(1).zip'
       - '.github/workflows/build-from-archive.yml'
@@ -15,13 +16,15 @@ permissions:
 jobs:
   build-debug-apk:
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 40
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Extract uploaded project archive
         run: |
+          set -e
           test -s 'khoms_app_source(1).zip'
           unzip -q 'khoms_app_source(1).zip' -d extracted-source
           test -d extracted-source/khoms_app
@@ -40,10 +43,15 @@ jobs:
           node-version: '22'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
 
       - name: Install Android SDK packages
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        run: |
+          sdkmanager --install \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Install JavaScript dependencies
         run: npm install --no-audit --no-fund
