@@ -1,82 +1,82 @@
-
-name: Build Khoms APK from uploaded ZIP
-
+name: Build Khoms Android APK and Windows EXE
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'khoms_app_source(1).zip'
       - '.github/workflows/build-from-archive.yml'
-
 permissions:
   contents: read
-
+env:
+  SOURCE_ARCHIVE: 'khoms_app_source(1).zip'
 jobs:
-  build-debug-apk:
+  android:
+    name: Android debug APK
     runs-on: ubuntu-24.04
     timeout-minutes: 40
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Extract uploaded project archive
+      - uses: actions/checkout@v4
+      - name: Extract project archive
         run: |
-          set -e
-          test -s 'khoms_app_source(1).zip'
-          unzip -q 'khoms_app_source(1).zip' -d extracted-source
-          test -d extracted-source/khoms_app
+          set -euo pipefail
+          test -s "$SOURCE_ARCHIVE"
+          unzip -q "$SOURCE_ARCHIVE" -d extracted-source
+          test -f extracted-source/khoms_app/android/app/build.gradle
           cp -a extracted-source/khoms_app/. .
-          rm -rf extracted-source desktop/__pycache__
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: platform-tools
-
+      - name: Validate source
+        run: node scripts/validate-source.cjs
+      - uses: android-actions/setup-android@v4
       - name: Install Android SDK packages
         run: |
-          sdkmanager --install \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
-
-      - name: Install JavaScript dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Verify source and run regression tests
-        run: npm run verify
-
-      - name: Enable AndroidX for Android build
-        run: |
-          mkdir -p android
-          touch android/gradle.properties
-          grep -qxF 'android.useAndroidX=true' android/gradle.properties || echo 'android.useAndroidX=true' >> android/gradle.properties
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-
-      - name: Build debug APK
-        run: gradle --no-daemon -p android assembleDebug
-
-      - name: Upload installable debug APK
-        uses: actions/upload-artifact@v4
+      - name: Build APK
+        run: gradle --no-daemon -p android clean assembleDebug
+      - uses: actions/upload-artifact@v4
         with:
-          name: khoms-android-debug-v2.34
+          name: khoms-android-debug-v2.36.0
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
+
+  windows:
+    name: Windows installer and portable EXE
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract project archive
+        shell: pwsh
+        run: |
+          $archive = $env:SOURCE_ARCHIVE
+          if (!(Test-Path $archive)) { throw "Missing source archive: $archive" }
+          Expand-Archive -LiteralPath $archive -DestinationPath extracted-source -Force
+          $src = Join-Path (Get-Location) 'extracted-source/khoms_app'
+          if (!(Test-Path (Join-Path $src 'package.json'))) { throw 'khoms_app folder is missing in archive' }
+          Get-ChildItem -LiteralPath $src -Force | Copy-Item -Destination (Get-Location) -Recurse -Force
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate source
+        run: npm run verify
+      - name: Install Electron dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build Windows packages
+        run: npm run dist:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: khoms-windows-v2.36.0
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
