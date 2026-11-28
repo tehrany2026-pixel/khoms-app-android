@@ -1,9 +1,9 @@
-نرم‌افزار مدیریت خمس — مخزن ساخت نسخه ۲٫۳۸٫۱۸
+# Khoms App
 
-این مخزن برای ساخت دو خروجی نگهداری می‌شود:
-- APK آزمایشی اندروید
-- بسته نصب و نسخه قابل‌حمل ویندوز
+Current source package: `khoms-v2.38.19-source.zip` (upload this exact file to the repository root to trigger the build).
 
-برای ساخت خودکار، فایل `khoms-v2.38.18-source.zip` باید در ریشه مخزن قرار گیرد. سپس از بخش Actions اجرای «Build Khoms Android APK and Windows EXE» را باز کنید. خروجی‌ها پس از موفقیت هر دو job در بخش Artifacts قرار می‌گیرند.
+The workflow builds two artifacts:
+- `khoms-android-debug-v2.38.19`: Android debug APK for testing.
+- `khoms-windows-v2.38.19`: Windows NSIS installer and portable EXE.
 
-توجه: فایل ZIP سورس، خودش فایل نصب نیست. تا وقتی ساخت GitHub Actions موفق نشده و Artifactها دریافت و بررسی نشده‌اند، APK و برنامه ویندوز آماده تحویل محسوب نمی‌شوند.
+The APK is a test build, not a production-signed release. Install and test both outputs on real devices before public release.
