@@ -4,12 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'khoms-v2.38.0-source.zip'
-      - '.github/workflows/build-from-archive.yml'
+      - 'khoms-v2.38.18-source.zip'
 permissions:
   contents: read
 env:
-  SOURCE_ARCHIVE: 'khoms-v2.38.0-source.zip'
+  SOURCE_ARCHIVE: 'khoms-v2.38.18-source.zip'
 jobs:
   android:
     name: Android debug APK
@@ -45,11 +44,10 @@ jobs:
         run: gradle --no-daemon -p android clean assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: khoms-android-debug-v2.38.0
+          name: khoms-android-debug-v2.38.18
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 30
-
   windows:
     name: Windows installer and portable EXE
     runs-on: windows-latest
@@ -76,7 +74,7 @@ jobs:
         run: npx electron-builder --win --x64 --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: khoms-windows-v2.38.0
+          name: khoms-windows-v2.38.18
           path: dist/*
           if-no-files-found: error
           retention-days: 30
