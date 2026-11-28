@@ -4,11 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'khoms-v2.38.19-source.zip'
+      - 'khoms-v2.38.19-source(2).zip'
+      - '.github/workflows/build-from-archive.yml'
 permissions:
   contents: read
 env:
-  SOURCE_ARCHIVE: 'khoms-v2.38.19-source.zip'
+  SOURCE_ARCHIVE: 'khoms-v2.38.19-source(2).zip'
 jobs:
   android:
     name: Android debug APK
